@@ -70,6 +70,7 @@ globalThis.fetch = async function fetch(){
           }
         }
         response = cachedResponse.clone();
+        console.log('response from cache');
       } else {
         const presponse = globalThis[$fetch](...arguments);
         WeakCache.set(request.url,presponse);
