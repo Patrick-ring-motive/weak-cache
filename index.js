@@ -1,4 +1,11 @@
 (()=>{
+const instanceOf=(x,y) =>{
+  try{
+    return x instanceof y;
+  }catch{
+    return false;
+  }
+};
 const CacheMap = (()=>{
   const objDefProp = (obj,prop,value) =>Object.defineProperty(obj,prop,{
     value:value,
@@ -54,10 +61,9 @@ globalThis.WeakCache = new CacheMap();
 const $fetch = Symbol('*fetch');
 globalThis[$fetch] = fetch;
 globalThis.fetch = async function fetch(){
-  let request;
+  let request,response;
   try{
-      request = new Request(...arguments);
-    let response;
+    request = new Request(...arguments);
     if (request.method === 'GET'){
       let cachedResponse = WeakCache.get(request.url);
       if (cachedResponse) {
@@ -69,7 +75,11 @@ globalThis.fetch = async function fetch(){
             WeakCache.delete(request.url);
           }
         }
-        response = cachedResponse.clone();
+        try{
+          response = cachedResponse.clone();
+        }catch{
+          WeakCache.delete(request.url);
+        }
         console.log('response from cache');
       } else {
         const presponse = globalThis[$fetch](...arguments);
@@ -81,9 +91,11 @@ globalThis.fetch = async function fetch(){
           WeakCache.delete(request.url);
         }
       }
-      return response;
     }
-    return await globalThis[$fetch](...arguments);
+    if(!instanceOf(response,Response)){
+     response = await globalThis[$fetch](...arguments);
+    }
+    return response;
   }catch(e){
     WeakCache.delete(request.url);
     return new Response(Object.getOwnPropertyNames(e).map(x=>`${x} : ${e[x]}`).join(''),{
