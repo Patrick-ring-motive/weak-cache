@@ -57,27 +57,32 @@ globalThis.fetch = async function fetch(){
   let req;
   try{
     req = new Request(...arguments);
+    let response;
     if (req.method === 'GET'){
       let res = WeakCache.get(req.url);
       if (res) {
         if(res instanceof Promise){
           res = await res;
-          WeakCache.set(req.url,res);
+          if(!res.bodyUsed){
+            WeakCache.set(req.url,res);
+          }else{
+            WeakCache.delete(req.url);
+          }
         }
-        return res.clone();
+        response = res.clone();
       } else {
-        let response =  globalThis[$fetch](...arguments);
-        WeakCache.set(req.url,response);
-        response = await response;
-        if (response.status === 200) {
+        const presponse = globalThis[$fetch](...arguments);
+        WeakCache.set(req.url,presponse);
+        response = await presponse;
+        if (response.status === 200 && !res.bodyUsed) {
           WeakCache.set(req.url, response.clone());
         }else{
           WeakCache.delete(req.url);
         }
-        return response;
       }
+      return response;
     }
-    return globalThis[$fetch](...arguments);
+    return await globalThis[$fetch](...arguments);
   }catch(e){
     WeakCache.delete(req.url);
     return new Response(Object.getOwnPropertyNames(e).map(x=>`${x} : ${e[x]}`).join(''),{
