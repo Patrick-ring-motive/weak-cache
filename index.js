@@ -54,8 +54,9 @@ globalThis.WeakCache = new CacheMap();
 const $fetch = Symbol('*fetch');
 globalThis[$fetch] = fetch;
 globalThis.fetch = async function fetch(){
+  let req;
   try{
-    const req = new Request(...arguments);
+    req = new Request(...arguments);
     if (req.method === 'GET'){
       let res = WeakCache.get(req.url);
       if (res) {
