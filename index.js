@@ -54,37 +54,37 @@ globalThis.WeakCache = new CacheMap();
 const $fetch = Symbol('*fetch');
 globalThis[$fetch] = fetch;
 globalThis.fetch = async function fetch(){
-  let req;
+  let request;
   try{
-    req = new Request(...arguments);
+      request = new Request(...arguments);
     let response;
-    if (req.method === 'GET'){
-      let res = WeakCache.get(req.url);
-      if (res) {
-        if(res instanceof Promise){
-          res = await res;
-          if(!res.bodyUsed){
-            WeakCache.set(req.url,res);
+    if (request.method === 'GET'){
+      let cachedResponse = WeakCache.get(request.url);
+      if (cachedResponse) {
+        if(cachedResponse instanceof Promise){
+          cachedResponse = await cachedResponse;
+          if(!cachedResponse.bodyUsed){
+            WeakCache.set(request.url,cachedResponse);
           }else{
-            WeakCache.delete(req.url);
+            WeakCache.delete(request.url);
           }
         }
-        response = res.clone();
+        response = cachedResponse.clone();
       } else {
         const presponse = globalThis[$fetch](...arguments);
-        WeakCache.set(req.url,presponse);
+        WeakCache.set(request.url,presponse);
         response = await presponse;
-        if (response.status === 200 && !res.bodyUsed) {
-          WeakCache.set(req.url, response.clone());
+        if (response.status === 200 && !response.bodyUsed) {
+          WeakCache.set(request.url, response.clone());
         }else{
-          WeakCache.delete(req.url);
+          WeakCache.delete(request.url);
         }
       }
       return response;
     }
     return await globalThis[$fetch](...arguments);
   }catch(e){
-    WeakCache.delete(req.url);
+    WeakCache.delete(request.url);
     return new Response(Object.getOwnPropertyNames(e).map(x=>`${x} : ${e[x]}`).join(''),{
       status : 569,
       statusText:e.message
