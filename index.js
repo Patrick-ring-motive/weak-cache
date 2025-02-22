@@ -1,4 +1,9 @@
 // nodejs
+
+(async()=>{
+
+await import('./weak-cache.js');
+
 var execSync = require('child_process').execSync;
 
 
@@ -15,3 +20,5 @@ var execSync = require('child_process').execSync;
     error.stderr;  // Holds the stderr output. Use `.toString()`.
     error.stdout;  // Holds the stdout output. Use `.toString()`.
  }
+
+})();

@@ -6,13 +6,7 @@ const instanceOf=(x,y) =>{
     return false;
   }
 };
-const CacheMap = (()=>{
-  const objDefProp = (obj,prop,value) =>Object.defineProperty(obj,prop,{
-    value:value,
-    enumerable:false,
-    writable:true,
-    configurable:true
-  });
+const WeakRefMap = (()=>{
   const $weakRefMap = Symbol('*weakRefMap');
   return class WeakRefMap extends Map {
       constructor() {
@@ -39,7 +33,7 @@ const CacheMap = (()=>{
       }
 
       has(key) {
-        const value = ref?.deref?.();
+        const value = this[$weakRefMap].get(key)?.deref?.();
         if (value === undefined) {
           this[$weakRefMap].delete(key);
           return false;
@@ -63,7 +57,7 @@ globalThis.fetch = async function fetch(){
         request[$response] = cachedResponse;
         if(cachedResponse instanceof Promise){
           cachedResponse = await cachedResponse;
-          if(!cachedResponse.bodyUsed){
+          if(cachedResponse.status === 200 && !cachedResponse.bodyUsed){
             WeakCache.set(request.url,cachedResponse);
           }else{
             WeakCache.delete(request.url);
