@@ -43,6 +43,8 @@ const WeakRefMap = (()=>{
     }
   })();
 
+  const isValidResponse = x => (x?.status === 200 && !x?.bodyUsed && !x?.body?.locked) || x?.status === 304;
+  
 globalThis.WeakCache = new WeakRefMap();
 const $response = Symbol('*response');
 const $fetch = Symbol('*fetch');
@@ -57,7 +59,7 @@ globalThis.fetch = async function fetch(){
         request[$response] = cachedResponse;
         if(cachedResponse instanceof Promise){
           cachedResponse = await cachedResponse;
-          if(cachedResponse.status === 200 && !cachedResponse.bodyUsed){
+          if(isValidResponse(cachedResponse)){
             WeakCache.set(request.url,cachedResponse);
           }else{
             WeakCache.delete(request.url);
