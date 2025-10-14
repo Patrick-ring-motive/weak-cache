@@ -3,27 +3,44 @@
         const _weakRefMap = new Map();
         return class WeakRefMap extends Map {
             get(key) {
-                const ref = _weakRefMap.get(key);
-                const value = ref?.deref?.();
-                if (value === undefined) {
-                    _weakRefMap.delete(key);
+                try {
+                    const ref = _weakRefMap.get(key);
+                    const value = ref?.deref?.();
+                    if (value === undefined) {
+                        _weakRefMap.delete(key);
+                    }
+                    return value;
+                } catch (e) {
+                    console.warn(e, key);
                 }
-                return value;
             }
             set(key, value) {
-                _weakRefMap.set(key, new WeakRef(value));
+                try {
+                    _weakRefMap.set(key, new WeakRef(value));
+                } catch (e) {
+                    console.warn(e, key, value);
+                }
                 return this;
             }
             delete(key) {
-                return _weakRefMap.delete(key);
+                try {
+                    return _weakRefMap.delete(key);
+                } catch (e) {
+                    console.warn(e, key);
+                }
             }
             has(key) {
-                const value = _weakRefMap.get(key)?.deref?.();
-                if (value === undefined) {
-                    _weakRefMap.delete(key);
+                try {
+                    const value = _weakRefMap.get(key)?.deref?.();
+                    if (value === undefined) {
+                        _weakRefMap.delete(key);
+                        return false;
+                    }
+                    return true;
+                } catch (e) {
+                    console.warn(e, key);
                     return false;
                 }
-                return true;
             }
         }
     })();
