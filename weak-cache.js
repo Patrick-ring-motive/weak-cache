@@ -44,6 +44,23 @@
             }
         }
     })();
+    const extend = (thisClass, superClass) => {
+        try {
+            Object.setPrototypeOf(thisClass, superClass);
+            Object.setPrototypeOf(
+                thisClass.prototype,
+                superClass?.prototype ??
+                superClass?.constructor?.prototype ??
+                superClass
+            );
+        } catch (e) {
+            console.warn(e, {
+                thisClass,
+                superClass
+            });
+        }
+        return thisClass;
+    };
     const instanceOf = (x, y) => {
         try {
             return x instanceof y;
@@ -56,9 +73,8 @@
     const isPromise = x => instanceOf(x, Promise) || x?.constructor?.name == 'Promise' || typeof x?.then === 'function';
     globalThis.WeakCache = new WeakRefMap();
     const $response = Symbol('*response');
-    const $fetch = Symbol('*fetch');
-    globalThis[$fetch] = fetch;
-    globalThis.fetch = async function fetch() {
+    const _fetch = fetch;
+    globalThis.fetch = extends(async function fetch() {
         let request, response;
         try {
             request = new Request(...arguments);
@@ -82,7 +98,7 @@
                     }
                     console.log('response from cache');
                 } else {
-                    const presponse = globalThis[$fetch](...arguments);
+                    const presponse = _fetch(...arguments);
                     WeakCache.set(request.url, presponse);
                     response = await presponse;
                     if (response.status === 200 && !response.bodyUsed) {
@@ -93,7 +109,7 @@
                 }
             }
             if (!isResponse(response)) {
-                response = await globalThis[$fetch](...arguments);
+                response = await _fetch(...arguments);
             }
             return response;
         } catch (e) {
@@ -103,5 +119,5 @@
                 statusText: `500 Internal Server Error ${e?.message}`.trim()
             });
         }
-    };
+    },_fetch);
 })();
