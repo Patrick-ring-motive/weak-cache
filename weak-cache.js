@@ -74,7 +74,7 @@
     globalThis.WeakCache = new WeakRefMap();
     const $response = Symbol('*response');
     const _fetch = fetch;
-    globalThis.fetch = extends(async function fetch() {
+    globalThis.fetch = extend(async function fetch() {
         let request, response;
         try {
             request = new Request(...arguments);
